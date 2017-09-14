@@ -89,6 +89,88 @@ By default, this removes read stories that are more than 30 days old (that
 are not starred). You can either run this manually or add it as a scheduled
 task.
 
+### Running "stringer" in "Docker" container
+
+* Build "Stringer"'s "Docker" image
+
+  ~~~
+  docker build --tag swanson/stringer .
+  ~~~
+
+* Pull the "Docker" image
+
+  ~~~
+  docker pull swanson/stringer
+  ~~~
+
+* Push the "Docker" image to an isolated host
+
+  ~~~
+  # Pull image first to your local host
+  docker pull swanson/stringer
+
+  # Export image to local filesystem
+  docker save -o /tmp/stringer.tar.gz swanson/stringer
+
+  # Transfer image to host
+  scp /tmp/stringer.tar.gz <host>:/tmp/
+
+  # Export image to local filesystem
+  ssh <host> docker load -i /tmp/stringer.tar.gz
+  ~~~
+
+* Run a container with "Stringer"
+
+  To start "Stringer" with its defaults, use the following command.
+
+  ~~~
+  docker run --rm --name stringer-1 -p 5000:5000 swanson/stringer
+  ~~~
+
+  To configure the database for the container, use the `DATABASE_URL`-environment
+  variable. For more information, please read the docs for
+  ["ActiveRecord"](http://guides.rubyonrails.org/configuring.html#configuring-a-database).
+  
+  ~~~bash
+  # PostgreSQL
+  docker run --rm --name stringer-1 -p 5000:5000 -e DATABASE_URL="postgresql://localhost/blog_development?pool=5" swanson/stringer
+  
+  # Sqlite3
+  docker run --rm --name stringer-1 -p 5000:5000 -e DATABASE_URL="sqlite3:///db/stringer.db" swanson/stringer
+  ~~~
+  
+  To define the secret used to generate the session token, define `SECRET_TOKEN`.
+  
+  ~~~bash
+  docker run --rm --name stringer-1 -p 5000:5000 -e SECRET_TOKEN="$(openssl rand -hex 32)" swanson/stringer
+  ~~~
+  
+  To fetch stories, a cron daemon is used. You can configure the download of stories in minutes via `FETCH_STORIES_EVERY_MINUTES`.
+  
+  ~~~bash
+  docker run --rm --name stringer-1 -p 5000:5000 -e FETCH_STORIES_EVERY_MINUTES=15 swanson/stringer
+  ~~~
+  
+  To configure the amount of days when stringer starts to remove old stories, use `CLEANUP_STORIES_AFTER_DAYS`.
+  
+  ~~~bash
+  docker run --rm --name stringer-1 -p 5000:5000 -e CLEANUP_STORIES_AFTER_DAYS=30 swanson/stringer
+  ~~~
+  
+  By default "ActiveRecord" is verbose with logging. To "silence" it, run the
+  container with `LOG_LEVEL=info`.
+  
+  ~~~bash
+  docker run --rm --name stringer-1 -p 5000:5000 -e LOG_LEVEL=info swanson/stringer
+  ~~~
+
+* Run rake tasks in your container
+
+  ~~~bash
+  # docker run --rm --name stringer-1 -p 5000:5000 -e swanson/stringer bundle exec rake <task>
+  docker run --rm --name stringer-1 -p 5000:5000 -e swanson/stringer bundle exec rake db:migrate
+  ~~~
+
 ## Development
 
 Run the Ruby tests with `rspec`.
