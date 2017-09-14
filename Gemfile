@@ -7,8 +7,13 @@ group :production do
   gem "unicorn", "~> 4.7"
 end
 
-group :development do
+group :development, :docker do
   gem "sqlite3", "~> 1.3", ">= 1.3.8"
+end
+
+group :docker do
+  gem "clockwork", "~>2.0"
+  gem "foreman", "~>0.84"
 end
 
 group :development, :test do
